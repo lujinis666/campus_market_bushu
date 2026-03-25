@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Campus Market · 校园闲置交易平台</title>
 
-<!-- Favicon: SVG logo mark -->
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23E8472A'/%3E%3Cpath d='M18 22h4l2 12h16l2-10H24' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Ccircle cx='27' cy='40' r='2.5' fill='white'/%3E%3Ccircle cx='37' cy='40' r='2.5' fill='white'/%3E%3Cpath d='M32 14 C28 14 26 17 26 20 L38 20 C38 17 36 14 32 14Z' fill='white' opacity='0.9'/%3E%3C/svg%3E">
+<!-- Favicon -->
+<link rel="icon" type="image/png" href="/favicon.png">
 
 <!-- Premium font stack: Plus Jakarta Sans (headings) + Nunito (body) + Noto Sans SC (Chinese) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -47,6 +47,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;height:var(--nav-h);
   font-weight:800;color:var(--ink);margin-right:36px;cursor:pointer;letter-spacing:-0.3px}
 .nav-logo .logo-icon{width:30px;height:30px;background:var(--accent);border-radius:8px;
   display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.nav-logo .logo-icon img{width:100%;height:100%;object-fit:cover;border-radius:8px;display:block}
 .nav-logo .dot{color:var(--accent)}
 .nav-links{display:flex;align-items:center;gap:2px;flex:1}
 .nav-link{padding:8px 15px;border-radius:8px;font-size:14px;font-weight:500;color:var(--ink2);
@@ -506,6 +507,13 @@ main{padding-top:var(--nav-h);min-height:100vh}
   display:flex;align-items:center;justify-content:center;font-size:16px;
   cursor:pointer;transition:var(--tr);flex-shrink:0;color:var(--ink3)}
 .msg-tool:hover{background:var(--bg2);color:var(--ink)}
+.chat-more-menu{display:none;position:absolute;top:calc(100% + 8px);right:0;min-width:176px;
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-lg);
+  z-index:80;overflow:hidden}
+.chat-more-menu.open{display:block}
+.chat-more-menu-item{padding:12px 16px;font-size:13px;font-weight:600;cursor:pointer;transition:var(--tr);color:var(--ink2)}
+.chat-more-menu-item:hover{background:var(--bg2)}
+.chat-more-menu-item.danger{color:var(--accent)}
 .msg-send-btn{width:46px;height:46px;background:linear-gradient(135deg,var(--accent),#c93a20);
   color:#fff;border-radius:14px;display:flex;align-items:center;justify-content:center;
   font-size:18px;transition:var(--tr);flex-shrink:0;
@@ -763,12 +771,7 @@ footer{background:var(--ink);color:rgba(255,255,255,0.7);padding:44px 44px 26px;
 <nav>
   <div class="nav-logo" onclick="nav('home')">
     <div class="logo-icon">
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M3 5h2l1.5 7h7l1.5-5.5H7" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        <circle cx="8" cy="13.5" r="1" fill="white"/>
-        <circle cx="12" cy="13.5" r="1" fill="white"/>
-        <path d="M9 2.5 C7.5 2.5 6.5 3.8 6.5 5 L11.5 5 C11.5 3.8 10.5 2.5 9 2.5Z" fill="white" opacity="0.85"/>
-      </svg>
+      <img src="/nav-logo.png" alt="Campus Market">
     </div>
     Campus<span class="dot">·</span>Market
   </div>
@@ -881,8 +884,8 @@ footer{background:var(--ink);color:rgba(255,255,255,0.7);padding:44px 44px 26px;
       <div>
         <div class="footer-brand-name">
           <span style="display:inline-flex;align-items:center;gap:8px">
-            <span style="width:26px;height:26px;background:var(--accent);border-radius:7px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">
-              <svg width="15" height="15" viewBox="0 0 18 18" fill="none"><path d="M3 5h2l1.5 7h7l1.5-5.5H7" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="13.5" r="1" fill="white"/><circle cx="12" cy="13.5" r="1" fill="white"/><path d="M9 2.5 C7.5 2.5 6.5 3.8 6.5 5 L11.5 5 C11.5 3.8 10.5 2.5 9 2.5Z" fill="white" opacity="0.85"/></svg>
+            <span style="width:26px;height:26px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden">
+              <img src="/nav-logo.png" alt="Campus Market" style="width:100%;height:100%;object-fit:cover;display:block">
             </span>
             Campus<span class="dot">·</span>Market
           </span>
@@ -1228,7 +1231,7 @@ footer{background:var(--ink);color:rgba(255,255,255,0.7);padding:44px 44px 26px;
 <div class="page" id="page-profile">
   <div class="profile-layout">
     <div class="profile-header" id="profileHeader"></div>
-    <div class="profile-tabs">
+    <div class="profile-tabs" id="profileTabs">
       <div class="profile-tab active" onclick="setProfileTab(this,'active')">在售物品</div>
       <div class="profile-tab" onclick="setProfileTab(this,'sold')">已售出</div>
       <div class="profile-tab" onclick="setProfileTab(this,'favorites')">我的收藏</div>
@@ -1263,7 +1266,7 @@ footer{background:var(--ink);color:rgba(255,255,255,0.7);padding:44px 44px 26px;
 
 <script>
 const API = '/api';
-const STATE = { page:'home', auth:null, currentProduct:null, currentConv:null, sort:'latest', category:'', search:'', marketPage:1, pubImages:[] };
+const STATE = { page:'home', auth:null, currentProduct:null, currentConv:null, profileUserId:null, sort:'latest', category:'', search:'', marketPage:1, pubImages:[] };
 
 // ==================== AUTH ====================
 function getToken(){ return localStorage.getItem('cm_token') }
@@ -1284,7 +1287,7 @@ function renderNavAuth(){
   if(STATE.auth){
     const initial = (STATE.auth.nickname||STATE.auth.username||'?')[0];
     const avHtml = STATE.auth.avatar_url && !STATE.auth.avatar_url.match(/^[^\./]$/)
-      ? `<img src="${API.replace('/api','')+'/uploads/'+STATE.auth.avatar_url}" alt="">`
+      ? `<img src="${imgUrl(STATE.auth.avatar_url)}" alt="">`
       : initial;
     area.innerHTML = `
       <div style="position:relative" id="avatarWrap">
@@ -1297,7 +1300,7 @@ function renderNavAuth(){
             <div style="font-size:12px;color:var(--ink3);margin-top:2px">${STATE.auth.email||''}</div>
           </div>
           <div style="padding:5px">
-            <div class="_umenu-item" onclick="nav('profile');closeUserMenu()">👤 个人主页</div>
+            <div class="_umenu-item" onclick="STATE.profileUserId=null;nav('profile');closeUserMenu()">👤 个人主页</div>
             <div class="_umenu-item" onclick="requireAuth(()=>nav('publish'));closeUserMenu()">📝 发布物品</div>
             <div class="_umenu-item" onclick="requireAuth(()=>nav('messages'));closeUserMenu()">💬 我的消息</div>
             <div class="_umenu-item" onclick="showEditProfile();closeUserMenu()">⚙️ 编辑资料</div>
@@ -1532,8 +1535,10 @@ async function apiUpload(path, formData){
 
 function imgUrl(filename){
   if(!filename) return '';
-  if(filename.startsWith('http')) return filename;
-  return `/uploads/${filename}`;
+  if(/^https?:\/\//i.test(filename)) return filename;
+  const base = API.replace(/\/api\/?$/, '');
+  if(filename.startsWith('/')) return base + filename;
+  return `${base}/uploads/${filename}`;
 }
 
 // ==================== NAVIGATION ====================
@@ -2282,13 +2287,73 @@ async function submitPost(){
 
 // ==================== MESSAGES ====================
 let allConvs = [];
+function resetEmptyChatPane(){
+  document.getElementById('chatHeader').innerHTML = `<div class="msg-empty-state" style="flex-direction:row;padding:18px 22px;justify-content:flex-start;gap:12px">
+    <div style="font-size:22px;opacity:0.3">💬</div>
+    <div style="font-size:14px;color:var(--ink3)">选择一个对话开始聊天</div></div>`;
+  document.getElementById('chatMessages').innerHTML = '';
+  document.getElementById('msgInputArea').style.display = 'none';
+  STATE.currentConv = null;
+}
+
 async function loadMessages(){
   if(!STATE.auth){ showAuthModal('login'); return }
   try{
     allConvs = await apiFetch('/messages/conversations');
     renderChatList(allConvs);
     if(allConvs.length>0) selectConv(allConvs[0]);
+    else resetEmptyChatPane();
   }catch(e){ document.getElementById('chatList').innerHTML=`<div style="padding:20px;color:var(--ink3);font-size:13px">${e.message}</div>` }
+}
+
+function toggleChatMoreMenu(ev){
+  ev.stopPropagation();
+  const menu = document.getElementById('chatMoreMenu');
+  if(!menu) return;
+  const open = menu.classList.contains('open');
+  document.querySelectorAll('.chat-more-menu.open').forEach(m=>m.classList.remove('open'));
+  document.removeEventListener('click', closeChatMoreMenuOnDoc);
+  if(!open){
+    menu.classList.add('open');
+    requestAnimationFrame(()=>document.addEventListener('click', closeChatMoreMenuOnDoc));
+  }
+}
+
+function closeChatMoreMenuOnDoc(){
+  document.getElementById('chatMoreMenu')?.classList.remove('open');
+  document.removeEventListener('click', closeChatMoreMenuOnDoc);
+}
+
+function chatMenuViewProfile(){
+  closeChatMoreMenuOnDoc();
+  const other = STATE.currentConv?.other_user;
+  if(!other?.id) return;
+  STATE.profileUserId = other.id;
+  nav('profile');
+}
+
+async function chatMenuDeleteConv(){
+  closeChatMoreMenuOnDoc();
+  const cid = STATE.currentConv?.id;
+  if(!cid) return;
+  if(!confirm('确定删除与该联系人的会话？聊天记录将无法恢复。')) return;
+  try{
+    await apiFetch(`/messages/conversations/${cid}`, {method:'DELETE'});
+    toast('会话已删除','success');
+    await loadMessages();
+  }catch(e){ toast(e.message||'删除失败','error') }
+}
+
+async function chatMenuBlockUser(){
+  closeChatMoreMenuOnDoc();
+  const other = STATE.currentConv?.other_user;
+  if(!other?.id) return;
+  if(!confirm('拉黑后对方无法再向你发消息，并会删除当前会话。确定？')) return;
+  try{
+    await apiFetch(`/users/${other.id}/block`, {method:'POST'});
+    toast('已拉黑','success');
+    await loadMessages();
+  }catch(e){ toast(e.message||'操作失败','error') }
 }
 
 function renderChatList(convs){
@@ -2346,9 +2411,16 @@ async function selectConv(conv){
       <div class="chat-header-status">● 在线</div>
     </div>
     ${prodHtml}
-    <div style="display:flex;gap:8px;margin-left:auto">
-      <div class="msg-tool">📞</div>
-      <div class="msg-tool">⋯</div>
+    <div style="display:flex;gap:8px;margin-left:auto;align-items:center">
+      <div class="msg-tool" onclick="toast('语音通话功能即将上线')">📞</div>
+      <div style="position:relative">
+        <div class="msg-tool" onclick="event.stopPropagation();toggleChatMoreMenu(event)">⋯</div>
+        <div id="chatMoreMenu" class="chat-more-menu">
+          <div class="chat-more-menu-item" onclick="chatMenuViewProfile()">👤 查看 TA 的主页</div>
+          <div class="chat-more-menu-item danger" onclick="chatMenuDeleteConv()">🗑️ 删除会话</div>
+          <div class="chat-more-menu-item danger" onclick="chatMenuBlockUser()">🚫 拉黑 TA</div>
+        </div>
+      </div>
     </div>`;
 
   document.getElementById('msgInputArea').style.display='flex';
@@ -2637,7 +2709,7 @@ async function openPost(pid){
     const imagesHtml = p.images&&p.images.length ? `
       <div style="display:grid;grid-template-columns:${p.images.length===1?'1fr':p.images.length===2?'1fr 1fr':'1fr 1fr'};gap:10px;margin:20px 0;border-radius:var(--radius);overflow:hidden">
         ${p.images.map((img,i)=>`
-          <div style="${p.images.length===3&&i===0?'grid-row:span 2':''}height:${p.images.length===1?'360':'200'}px;overflow:hidden;background:var(--bg2);cursor:zoom-in" onclick="zoomImg('${imgUrl(img)}')">
+          <div style="${p.images.length===3&&i===0?'grid-row:span 2;':''}height:${p.images.length===1?'360':'200'}px;overflow:hidden;background:var(--bg2);cursor:zoom-in" onclick="zoomImg('${imgUrl(img)}')">
             <img src="${imgUrl(img)}" alt="" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.style.display='none'">
           </div>`).join('')}
       </div>` : '';
@@ -2653,7 +2725,7 @@ async function openPost(pid){
       <div style="background:var(--surface);border-radius:var(--radius);padding:28px;margin-bottom:20px">
         <!-- Header -->
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
-          <div style="width:44px;height:44px;border-radius:50%;background:${bg};display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:16px;overflow:hidden;flex-shrink:0">${avHtml}</div>
+          <div class="post-avatar" style="width:44px;height:44px;font-size:16px;background:${bg};flex-shrink:0">${avHtml}</div>
           <div style="flex:1">
             <div style="font-weight:700;font-size:15px">${a.nickname||'匿名用户'}</div>
             <div style="font-size:12px;color:var(--ink3)">${a.school||''} ${a.department||''} · ${p.created_at?.substring(0,16)||''}</div>
@@ -2854,8 +2926,64 @@ function replyToPostCmt(name, pid){
   const inp = document.getElementById('postCmtInput');
   if(inp){ inp.value=`@${name} `; inp.focus(); inp.scrollIntoView({behavior:'smooth',block:'center'}); }
 }
+async function loadOtherUserProfile(uid){
+  const header = document.getElementById('profileHeader');
+  const tabs = document.getElementById('profileTabs');
+  try{
+    const u = await apiFetch(`/users/${uid}`);
+    const avBig = u.avatar_url && !u.avatar_url.match(/^[\u4e00-\u9fa5]$/)
+      ? `<img src="${imgUrl(u.avatar_url)}" alt="">` : (u.nickname||u.username||'?')[0];
+    const bg = authorColor(u.id);
+    tabs.innerHTML = `
+      <div class="profile-tab active" onclick="setProfileTab(this,'active')">在售物品</div>
+      <div class="profile-tab" onclick="setProfileTab(this,'sold')">已售出</div>`;
+    header.innerHTML = `
+    <div class="profile-info">
+      <div class="profile-avatar-big" style="background:${bg}">${avBig}</div>
+      <div>
+        <div class="profile-name">${u.nickname||u.username||'用户'}</div>
+        <div class="profile-school">${u.school||''} · ${u.department||''} · ${u.grade||''}</div>
+        <div style="margin-top:6px;display:flex;gap:7px">
+          <span style="padding:3px 11px;background:rgba(232,71,42,0.2);color:#ffb4a2;border-radius:20px;font-size:11px;font-weight:600">${u.verified?'✓ 实名认证':'未实名'}</span>
+        </div>
+      </div>
+      <div style="margin-left:auto;display:flex;flex-direction:column;gap:10px;align-items:flex-end">
+        <button type="button" style="padding:9px 16px;border:1.5px solid rgba(255,255,255,0.35);border-radius:20px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;background:transparent" onclick="exitPublicProfile()">← 我的主页</button>
+        <button type="button" style="padding:9px 16px;background:var(--accent);border:none;border-radius:20px;color:#fff;font-size:13px;font-weight:700;cursor:pointer" onclick="startChatFromPublicProfile(${uid})">💬 发消息</button>
+      </div>
+    </div>
+    <div class="profile-stats">
+      <div><div class="profile-stat-num">${u.sell_count||0}</div><div class="profile-stat-label">已卖出</div></div>
+      <div><div class="profile-stat-num">${u.buy_count||0}</div><div class="profile-stat-label">已购入</div></div>
+      <div><div class="profile-stat-num">${u.rating!=null?u.rating:5.0}</div><div class="profile-stat-label">信用评分</div></div>
+    </div>`;
+    await loadProfileProducts('active');
+  }catch(e){
+    toast(e.message||'加载失败','error');
+    exitPublicProfile();
+  }
+}
+
+function exitPublicProfile(){
+  STATE.profileUserId = null;
+  loadProfile();
+}
+
+async function startChatFromPublicProfile(uid){
+  STATE.profileUserId = null;
+  await startChat(uid, null);
+}
+
 async function loadProfile(){
   if(!STATE.auth){ showAuthModal('login'); return }
+  if(STATE.profileUserId && STATE.profileUserId !== STATE.auth.id){
+    await loadOtherUserProfile(STATE.profileUserId);
+    return;
+  }
+  document.getElementById('profileTabs').innerHTML = `
+      <div class="profile-tab active" onclick="setProfileTab(this,'active')">在售物品</div>
+      <div class="profile-tab" onclick="setProfileTab(this,'sold')">已售出</div>
+      <div class="profile-tab" onclick="setProfileTab(this,'favorites')">我的收藏</div>`;
   const me = STATE.auth;
   const header = document.getElementById('profileHeader');
   const avBig = me.avatar_url && !me.avatar_url.match(/^[\u4e00-\u9fa5]$/)
@@ -2883,21 +3011,29 @@ async function loadProfile(){
 
 async function loadProfileProducts(status){
   const c = document.getElementById('profileProducts');
+  if(!STATE.auth) return;
+  const viewingId = STATE.profileUserId && STATE.profileUserId !== STATE.auth.id ? STATE.profileUserId : null;
+  const uid = viewingId || STATE.auth.id;
+  const isOwn = !viewingId;
+  if(status==='favorites' && !isOwn){
+    await loadProfileProducts('active');
+    return;
+  }
   c.innerHTML='<div class="skeleton" style="height:260px;border-radius:16px;grid-column:span 2"></div>';
   try{
     let data;
     if(status==='favorites'){
-      data = await apiFetch(`/users/${STATE.auth.id}/favorites`);
+      data = await apiFetch(`/users/${uid}/favorites`);
     } else {
-      data = await apiFetch(`/users/${STATE.auth.id}/products?status=${status}`);
+      data = await apiFetch(`/users/${uid}/products?status=${status}`);
     }
     if(!data.length){
       c.innerHTML=`<div class="empty-state" style="grid-column:span 4"><div class="empty-icon">📭</div>
         <div class="empty-text">暂无内容</div>
-        <div class="empty-hint">快去${status==='favorites'?'收藏喜欢的商品':'发布你的闲置物品'}吧</div></div>`;
+        <div class="empty-hint">${isOwn?('快去'+(status==='favorites'?'收藏喜欢的商品':'发布你的闲置物品')+'吧'):'该用户暂无此类物品'}</div></div>`;
       return;
     }
-    const showManage = (status==='active'||status==='sold');
+    const showManage = isOwn && (status==='active'||status==='sold');
     c.innerHTML = data.map(p=>productCardHTML(p, showManage)).join('');
   }catch(e){ c.innerHTML=`<div style="padding:20px;color:var(--ink3);font-size:13px">${e.message}</div>` }
 }

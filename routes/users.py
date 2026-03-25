@@ -153,6 +153,48 @@ def add_review(current_user_id, uid):
     finally:
         db.close()
 
+def _delete_conversations_between(db, uid_a, uid_b):
+    u1, u2 = min(uid_a, uid_b), max(uid_a, uid_b)
+    for row in db.execute(
+        'SELECT id FROM conversations WHERE user1_id=? AND user2_id=?', (u1, u2)
+    ).fetchall():
+        cid = row['id']
+        db.execute('DELETE FROM messages WHERE conversation_id=?', (cid,))
+        db.execute('DELETE FROM conversations WHERE id=?', (cid,))
+
+@users_bp.route('/<int:uid>/block', methods=['POST'])
+@token_required
+def block_user(current_user_id, uid):
+    if uid == current_user_id:
+        return jsonify({'error': '不能拉黑自己'}), 400
+    db = get_db()
+    try:
+        if not db.execute('SELECT 1 FROM users WHERE id=?', (uid,)).fetchone():
+            return jsonify({'error': '用户不存在'}), 404
+        db.execute(
+            'INSERT OR IGNORE INTO user_blocks (blocker_id, blocked_id) VALUES (?,?)',
+            (current_user_id, uid)
+        )
+        _delete_conversations_between(db, current_user_id, uid)
+        db.commit()
+        return jsonify({'message': '已拉黑'})
+    finally:
+        db.close()
+
+@users_bp.route('/<int:uid>/block', methods=['DELETE'])
+@token_required
+def unblock_user(current_user_id, uid):
+    db = get_db()
+    try:
+        db.execute(
+            'DELETE FROM user_blocks WHERE blocker_id=? AND blocked_id=?',
+            (current_user_id, uid)
+        )
+        db.commit()
+        return jsonify({'message': '已取消拉黑'})
+    finally:
+        db.close()
+
 # Notifications
 @users_bp.route('/notifications', methods=['GET'])
 @token_required

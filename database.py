@@ -202,6 +202,16 @@ def init_db():
         FOREIGN KEY(user_id) REFERENCES users(id)
     )''')
 
+    # User blocks (拉黑)
+    c.execute('''CREATE TABLE IF NOT EXISTS user_blocks (
+        blocker_id INTEGER NOT NULL,
+        blocked_id INTEGER NOT NULL,
+        created_at TEXT DEFAULT (datetime('now','localtime')),
+        PRIMARY KEY (blocker_id, blocked_id),
+        FOREIGN KEY(blocker_id) REFERENCES users(id),
+        FOREIGN KEY(blocked_id) REFERENCES users(id)
+    )''')
+
     conn.commit()
 
     # Seed demo data

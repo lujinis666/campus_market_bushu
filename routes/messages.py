@@ -4,6 +4,13 @@ from routes.auth import token_required
 
 messages_bp = Blueprint('messages', __name__)
 
+def _pair_blocked(db, uid_a, uid_b):
+    return db.execute(
+        '''SELECT 1 FROM user_blocks WHERE
+           (blocker_id=? AND blocked_id=?) OR (blocker_id=? AND blocked_id=?)''',
+        (uid_a, uid_b, uid_b, uid_a)
+    ).fetchone() is not None
+
 def conv_to_dict(row, db, current_user_id):
     d = dict(row)
     other_id = d['user2_id'] if d['user1_id'] == current_user_id else d['user1_id']
@@ -28,7 +35,14 @@ def list_conversations(current_user_id):
                ORDER BY last_time DESC''',
             (current_user_id, current_user_id)
         ).fetchall()
-        return jsonify([conv_to_dict(row, db, current_user_id) for row in rows])
+        out = []
+        for row in rows:
+            d = dict(row)
+            oid = d['user2_id'] if d['user1_id'] == current_user_id else d['user1_id']
+            if _pair_blocked(db, current_user_id, oid):
+                continue
+            out.append(conv_to_dict(row, db, current_user_id))
+        return jsonify(out)
     finally:
         db.close()
 
@@ -40,6 +54,9 @@ def get_conversation(current_user_id, cid):
         conv = db.execute('SELECT * FROM conversations WHERE id=?', (cid,)).fetchone()
         if not conv or (conv['user1_id'] != current_user_id and conv['user2_id'] != current_user_id):
             return jsonify({'error': '会话不存在或无权限'}), 404
+        other_id = conv['user2_id'] if conv['user1_id'] == current_user_id else conv['user1_id']
+        if _pair_blocked(db, current_user_id, other_id):
+            return jsonify({'error': '无法查看该会话'}), 403
 
         # Mark as read
         if conv['user1_id'] == current_user_id:
@@ -84,6 +101,8 @@ def start_conversation(current_user_id):
 
     db = get_db()
     try:
+        if _pair_blocked(db, current_user_id, other_id):
+            return jsonify({'error': '无法与该用户发消息'}), 403
         u1, u2 = min(current_user_id, other_id), max(current_user_id, other_id)
         existing = db.execute(
             'SELECT * FROM conversations WHERE user1_id=? AND user2_id=? AND (product_id=? OR product_id IS NULL)',
@@ -110,6 +129,9 @@ def send_message(current_user_id, cid):
         conv = db.execute('SELECT * FROM conversations WHERE id=?', (cid,)).fetchone()
         if not conv or (conv['user1_id'] != current_user_id and conv['user2_id'] != current_user_id):
             return jsonify({'error': '无权限'}), 403
+        other_id = conv['user2_id'] if conv['user1_id'] == current_user_id else conv['user1_id']
+        if _pair_blocked(db, current_user_id, other_id):
+            return jsonify({'error': '无法向对方发送消息'}), 403
 
         data = request.get_json()
         content = data.get('content', '').strip()
@@ -124,7 +146,6 @@ def send_message(current_user_id, cid):
         )
 
         # Update conversation
-        other_id = conv['user2_id'] if conv['user1_id'] == current_user_id else conv['user1_id']
         if conv['user1_id'] == other_id:
             db.execute("UPDATE conversations SET last_message=?, last_time=datetime('now','localtime'), unread_1=unread_1+1 WHERE id=?",
                        (content[:100], cid))
@@ -157,5 +178,20 @@ def unread_count(current_user_id):
             (current_user_id, current_user_id, current_user_id)
         ).fetchone()['cnt']
         return jsonify({'count': count})
+    finally:
+        db.close()
+
+@messages_bp.route('/conversations/<int:cid>', methods=['DELETE'])
+@token_required
+def delete_conversation(current_user_id, cid):
+    db = get_db()
+    try:
+        conv = db.execute('SELECT * FROM conversations WHERE id=?', (cid,)).fetchone()
+        if not conv or (conv['user1_id'] != current_user_id and conv['user2_id'] != current_user_id):
+            return jsonify({'error': '会话不存在或无权限'}), 404
+        db.execute('DELETE FROM messages WHERE conversation_id=?', (cid,))
+        db.execute('DELETE FROM conversations WHERE id=?', (cid,))
+        db.commit()
+        return jsonify({'message': '已删除'})
     finally:
         db.close()
