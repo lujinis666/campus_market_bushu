@@ -1262,7 +1262,7 @@ footer{background:var(--ink);color:rgba(255,255,255,0.7);padding:44px 44px 26px;
 </div>
 
 <script>
-const API = 'http://localhost:5000/api';
+const API = '/api';
 const STATE = { page:'home', auth:null, currentProduct:null, currentConv:null, sort:'latest', category:'', search:'', marketPage:1, pubImages:[] };
 
 // ==================== AUTH ====================
@@ -1533,7 +1533,7 @@ async function apiUpload(path, formData){
 function imgUrl(filename){
   if(!filename) return '';
   if(filename.startsWith('http')) return filename;
-  return `http://localhost:5000/uploads/${filename}`;
+  return `/uploads/${filename}`;
 }
 
 // ==================== NAVIGATION ====================
