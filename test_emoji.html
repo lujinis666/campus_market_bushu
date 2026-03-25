@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>表情功能测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .emoji-picker { position: absolute; bottom: 50px; left: 20px; background: white; border: 1px solid #ccc; border-radius: 8px; padding: 10px; display: none; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .emoji-categories { display: flex; gap: 4px; padding: 8px 10px; border-bottom: 1px solid #eee; }
+        .emoji-cat { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .emoji-cat:hover, .emoji-cat.active { background: #f0f0f0; }
+        .emoji-list { padding: 10px; overflow-y: auto; display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; }
+        .emoji-item { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .emoji-item:hover { background: #f0f0f0; transform: scale(1.2); }
+        .msg-input { width: 300px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin-top: 20px; }
+        .emoji-btn { padding: 10px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; margin-left: 10px; }
+    </style>
+</head>
+<body>
+    <h1>表情功能测试页面</h1>
+    <p>点击下面的表情按钮测试表情选择器功能：</p>
+
+    <div style="margin-top: 30px;">
+        <button class="emoji-btn" onclick="toggleEmojiPicker()">😊 表情</button>
+        <div class="emoji-picker" id="emojiPicker">
+            <div class="emoji-categories">
+                <div class="emoji-cat active" onclick="switchEmojiCat(this, 'smileys')">😊</div>
+                <div class="emoji-cat" onclick="switchEmojiCat(this, 'hearts')">❤️</div>
+                <div class="emoji-cat" onclick="switchEmojiCat(this, 'gestures')">👍</div>
+            </div>
+            <div class="emoji-list" id="emojiList"></div>
+        </div>
+        <input type="text" class="msg-input" id="msgInput" placeholder="选择表情后输入消息...">
+    </div>
+
+    <div id="testResults" style="margin-top: 30px; padding: 20px; background: #f9f9f9; border-radius: 8px;">
+        <h3>测试结果：</h3>
+        <p id="test1">1. 点击表情按钮：<span style="color: red;">❌ 未测试</span></p>
+        <p id="test2">2. 切换表情分类：<span style="color: red;">❌ 未测试</span></p>
+        <p id="test3">3. 选择表情插入：<span style="color: red;">❌ 未测试</span></p>
+        <p id="test4">4. 点击外部关闭：<span style="color: red;">❌ 未测试</span></p>
+    </div>
+
+    <script>
+        const EMOJI_CATEGORIES = {
+            smileys: ['😊', '😄', '😃', '😁', '😆', '😅', '🤣', '😂', '🙂', '🙃', '😇', '🥰', '😍', '🤗'],
+            hearts: ['❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💕', '💞', '💓'],
+            gestures: ['👍', '👎', '👏', '🙏', '👌', '✌️', '🤞', '🤟', '🤘', '👊', '✊', '💪']
+        };
+
+        let currentEmojiCategory = 'smileys';
+        let testsPassed = 0;
+        const totalTests = 4;
+
+        function toggleEmojiPicker() {
+            const picker = document.getElementById('emojiPicker');
+            if (picker.style.display === 'none' || !picker.style.display) {
+                picker.style.display = 'block';
+                renderEmojis(currentEmojiCategory);
+                updateTestResult(1, true);
+            } else {
+                picker.style.display = 'none';
+                updateTestResult(1, true);
+            }
+        }
+
+        function switchEmojiCat(el, category) {
+            document.querySelectorAll('.emoji-cat').forEach(cat => cat.classList.remove('active'));
+            el.classList.add('active');
+            currentEmojiCategory = category;
+            renderEmojis(category);
+            updateTestResult(2, true);
+        }
+
+        function renderEmojis(category) {
+            const list = document.getElementById('emojiList');
+            const emojis = EMOJI_CATEGORIES[category] || [];
+            list.innerHTML = emojis.map(emoji => `<div class="emoji-item" onclick="insertEmoji('${emoji}')">${emoji}</div>`).join('');
+        }
+
+        function insertEmoji(emoji) {
+            const input = document.getElementById('msgInput');
+            const start = input.selectionStart;
+            const end = input.selectionEnd;
+            const currentValue = input.value;
+
+            input.value = currentValue.substring(0, start) + emoji + currentValue.substring(end);
+            input.focus();
+            input.setSelectionRange(start + emoji.length, start + emoji.length);
+
+            document.getElementById('emojiPicker').style.display = 'none';
+            updateTestResult(3, true);
+        }
+
+        // Close emoji picker when clicking outside
+        document.addEventListener('click', function(event) {
+            const picker = document.getElementById('emojiPicker');
+            const emojiBtn = document.querySelector('.emoji-btn');
+
+            if ((picker.style.display === 'flex' || picker.style.display === 'block') &&
+                !picker.contains(event.target) &&
+                !emojiBtn.contains(event.target)) {
+                picker.style.display = 'none';
+                updateTestResult(4, true);
+            }
+        });
+
+        function updateTestResult(testNum, passed) {
+            const testElement = document.getElementById(`test${testNum}`);
+            if (passed) {
+                testElement.innerHTML = `${testNum}. ${testElement.textContent.split('. ')[1]}: <span style="color: green;">✅ 通过</span>`;
+                if (testNum === testsPassed + 1) {
+                    testsPassed++;
+                }
+            }
+        }
+
+        // 自动运行测试
+        setTimeout(() => {
+            // 测试1: 点击表情按钮
+            document.querySelector('.emoji-btn').click();
+
+            setTimeout(() => {
+                // 测试2: 切换分类
+                document.querySelectorAll('.emoji-cat')[1].click();
+
+                setTimeout(() => {
+                    // 测试3: 选择表情
+                    document.querySelectorAll('.emoji-item')[0].click();
+
+                    setTimeout(() => {
+                        // 测试4: 点击外部关闭
+                        document.querySelector('h1').click();
+                    }, 500);
+                }, 500);
+            }, 500);
+        }, 1000);
+    </script>
+</body>
+</html>
