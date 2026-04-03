@@ -115,12 +115,74 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;height:var(--nav-h);
 .nav-avatar img{width:100%;height:100%;object-fit:cover}
 main{padding-top:var(--nav-h);min-height:100vh}
 
-/* Site announcements (admin-managed) */
-.announcement-strip{background:linear-gradient(135deg,rgba(232,71,42,0.1),rgba(240,165,0,0.08));border-bottom:1px solid var(--border)}
-.announcement-strip-inner{max-width:1120px;margin:0 auto;padding:14px 28px 18px;font-size:14px;line-height:1.55}
-.ann-line{padding:10px 14px;background:var(--surface);border-radius:var(--radius-sm);margin-bottom:8px;border:1px solid var(--border);box-shadow:var(--shadow)}
-.ann-line:last-child{margin-bottom:0}
-.ann-line strong{color:var(--accent);font-weight:700;margin-right:10px}
+/* Site announcements (admin-managed) - 优化版 */
+.announcement-strip {
+  background: linear-gradient(135deg, rgba(232, 71, 42, 0.12), rgba(240, 165, 0, 0.1));
+  border-bottom: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+
+.announcement-strip::before {
+  content: '公告';
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: white;
+  padding: 4px 16px;
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 13px;
+  border-radius: 0 0 12px 0;
+  box-shadow: 0 4px 12px rgba(232, 71, 42, 0.2);
+  z-index: 2;
+}
+
+.announcement-strip-inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 24px 28px 20px 80px; /* 增加左侧内边距为公告标签留出空间 */
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.ann-line {
+  padding: 16px 20px;
+  background: var(--surface);
+  border-radius: var(--radius);
+  margin-bottom: 12px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  transition: var(--tr);
+  position: relative;
+  font-family: var(--font-body);
+}
+
+.ann-line:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  border-color: rgba(232, 71, 42, 0.2);
+}
+
+.ann-line:last-child {
+  margin-bottom: 0;
+}
+
+.ann-line strong {
+  color: var(--accent);
+  font-weight: 800;
+  font-family: var(--font-head);
+  font-size: 16px;
+  margin-right: 12px;
+  display: inline-block;
+  min-width: 80px;
+}
+
+.ann-line span {
+  color: var(--ink2);
+  font-weight: 500;
+}
 
 /* HERO */
 .hero{padding:64px 44px 56px;position:relative;overflow:hidden}
@@ -642,6 +704,73 @@ main{padding-top:var(--nav-h);min-height:100vh}
 .modal{background:var(--surface);border-radius:20px;padding:32px;max-width:440px;
   width:100%;position:relative;animation:modalIn 0.3s cubic-bezier(0.4,0,0.2,1);
   box-shadow:var(--shadow-lg)}
+.modal-close{position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:50%;
+  background:var(--bg2);display:flex;align-items:center;justify-content:center;
+  font-size:17px;cursor:pointer;transition:var(--tr)}
+.modal-close:hover{background:var(--bg)}
+.modal-title{font-family:var(--font-head);font-size:22px;font-weight:800;margin-bottom:6px}
+.modal-subtitle{font-size:13px;color:var(--ink3);margin-bottom:24px}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.modal-header h3 {
+  font-family: var(--font-head);
+  font-size: 22px;
+  font-weight: 800;
+  margin: 0;
+}
+.modal-body {
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+/* 公告模态框特定样式 */
+.announcement-modal {
+  max-width: 500px;
+  max-height: 70vh;
+}
+.announcement-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.announcement-item {
+  padding: 16px;
+  background: var(--bg2);
+  border-radius: 12px;
+  border-left: 4px solid var(--accent);
+}
+.announcement-item .ann-title {
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--ink);
+}
+.announcement-item .ann-content {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink2);
+  margin-bottom: 8px;
+}
+.announcement-item .ann-time {
+  font-size: 12px;
+  color: var(--ink3);
+}
+
+/* 公告图标按钮样式 */
+.nav-icon-btn {
+  position: relative;
+  cursor: pointer;
+  transition: var(--tr);
+}
+.nav-icon-btn:hover {
+  transform: translateY(-2px);
+}
 @keyframes modalIn{from{opacity:0;transform:scale(0.92) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
 .modal-close{position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:50%;
   background:var(--bg2);display:flex;align-items:center;justify-content:center;
@@ -799,6 +928,8 @@ footer{background:var(--ink);color:rgba(255,255,255,0.7);padding:44px 44px 26px;
     <div class="nav-icon-btn" onclick="requireAuth(()=>nav('messages'))" id="msgBell">💬
       <div class="badge hidden" id="msgBadge">0</div>
     </div>
+    <div class="nav-icon-btn" id="announcementBell" onclick="toggleAnnouncementModal()" style="position:relative" title="平台公告">📢
+    </div>
     <div class="nav-icon-btn" id="notifBell" onclick="toggleNotifDropdown(event)" style="position:relative">🔔
       <div class="badge hidden" id="notifBadge">0</div>
     </div>
@@ -807,6 +938,19 @@ footer{background:var(--ink);color:rgba(255,255,255,0.7);padding:44px 44px 26px;
 </nav>
 
 <div class="toast-container" id="toastContainer"></div>
+<!-- 公告模态框 -->
+<div id="announcementModal" class="modal-overlay" onclick="closeAnnouncementModal()" style="display:none">
+  <div class="modal-content announcement-modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3>📢 平台公告</h3>
+      <button class="modal-close" onclick="closeAnnouncementModal()">×</button>
+    </div>
+    <div class="modal-body" id="announcementModalBody">
+      <div class="announcement-list" id="announcementList"></div>
+    </div>
+  </div>
+</div>
+
 <main>
 
 <!-- HOME -->
@@ -1578,15 +1722,53 @@ function escapeAnnHtml(s){
 }
 
 async function loadAnnouncements(){
+  // 不再在主页直接显示公告，改为通过喇叭图标点击查看
+  // 保留函数以便其他页面可能需要
   const wrap=document.getElementById('announcementStrip');
-  const inner=document.getElementById('announcementStripInner');
-  if(!wrap||!inner) return;
-  try{
-    const items=await apiFetch('/announcements');
-    if(!items||!items.length){ wrap.style.display='none'; return; }
-    wrap.style.display='block';
-    inner.innerHTML=items.map(a=>'<div class="ann-line"><strong>'+escapeAnnHtml(a.title)+'</strong><span>'+escapeAnnHtml(a.content)+'</span></div>').join('');
-  }catch(e){ wrap.style.display='none'; }
+  if(wrap) wrap.style.display='none';
+}
+
+function toggleAnnouncementModal() {
+  const modal = document.getElementById('announcementModal');
+  const modalBody = document.getElementById('announcementModalBody');
+  const list = document.getElementById('announcementList');
+
+  if (!modal || !list) return;
+
+  if (modal.style.display === 'none' || !modal.style.display) {
+    // 打开模态框，加载公告
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden'; // 禁止背景滚动
+
+    // 加载公告内容
+    apiFetch('/announcements').then(items => {
+      if (!items || !items.length) {
+        list.innerHTML = '<div style="color:var(--ink3);text-align:center;padding:20px">暂无公告</div>';
+        return;
+      }
+
+      list.innerHTML = items.map(a => `
+        <div class="announcement-item">
+          <div class="ann-title">${escapeAnnHtml(a.title)}</div>
+          <div class="ann-content">${escapeAnnHtml(a.content)}</div>
+          <div class="ann-time">📅 ${new Date(a.created_at).toLocaleString('zh-CN')}</div>
+        </div>
+      `).join('');
+    }).catch(() => {
+      list.innerHTML = '<div style="color:var(--ink3);text-align:center;padding:20px">加载失败，请稍后重试</div>';
+    });
+  } else {
+    // 关闭模态框
+    closeAnnouncementModal();
+  }
+}
+
+function closeAnnouncementModal() {
+  const modal = document.getElementById('announcementModal');
+  if (!modal) return;
+
+  modal.style.display = 'none';
+  document.body.style.overflow = ''; // 恢复背景滚动
 }
 
 async function loadHome(){
