@@ -10,6 +10,25 @@ def get_db():
     conn.execute("PRAGMA foreign_keys=ON")
     return conn
 
+def ensure_schema(conn):
+    """Migrate existing SQLite DBs created before admin/announcements columns existed."""
+    c = conn.cursor()
+    cols = [row[1] for row in c.execute('PRAGMA table_info(users)').fetchall()]
+    if 'is_admin' not in cols:
+        c.execute('ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0')
+    if 'last_login' not in cols:
+        c.execute('ALTER TABLE users ADD COLUMN last_login TEXT')
+    c.execute('''CREATE TABLE IF NOT EXISTS announcements (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        content TEXT NOT NULL,
+        is_active INTEGER DEFAULT 1,
+        sort_order INTEGER DEFAULT 0,
+        created_at TEXT DEFAULT (datetime('now','localtime')),
+        updated_at TEXT DEFAULT (datetime('now','localtime'))
+    )''')
+    conn.commit()
+
 def init_db():
     conn = get_db()
     c = conn.cursor()
@@ -35,6 +54,8 @@ def init_db():
         trade_amount REAL DEFAULT 0.0,
         verified INTEGER DEFAULT 0,
         is_active INTEGER DEFAULT 1,
+        is_admin INTEGER DEFAULT 0,
+        last_login TEXT,
         created_at TEXT DEFAULT (datetime('now','localtime'))
     )''')
 
@@ -212,7 +233,19 @@ def init_db():
         FOREIGN KEY(blocked_id) REFERENCES users(id)
     )''')
 
+    # Site announcements (admin-managed)
+    c.execute('''CREATE TABLE IF NOT EXISTS announcements (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        content TEXT NOT NULL,
+        is_active INTEGER DEFAULT 1,
+        sort_order INTEGER DEFAULT 0,
+        created_at TEXT DEFAULT (datetime('now','localtime')),
+        updated_at TEXT DEFAULT (datetime('now','localtime'))
+    )''')
+
     conn.commit()
+    ensure_schema(conn)
 
     # Seed demo data
     _seed_demo(conn)

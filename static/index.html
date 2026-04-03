@@ -115,6 +115,13 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;height:var(--nav-h);
 .nav-avatar img{width:100%;height:100%;object-fit:cover}
 main{padding-top:var(--nav-h);min-height:100vh}
 
+/* Site announcements (admin-managed) */
+.announcement-strip{background:linear-gradient(135deg,rgba(232,71,42,0.1),rgba(240,165,0,0.08));border-bottom:1px solid var(--border)}
+.announcement-strip-inner{max-width:1120px;margin:0 auto;padding:14px 28px 18px;font-size:14px;line-height:1.55}
+.ann-line{padding:10px 14px;background:var(--surface);border-radius:var(--radius-sm);margin-bottom:8px;border:1px solid var(--border);box-shadow:var(--shadow)}
+.ann-line:last-child{margin-bottom:0}
+.ann-line strong{color:var(--accent);font-weight:700;margin-right:10px}
+
 /* HERO */
 .hero{padding:64px 44px 56px;position:relative;overflow:hidden}
 .hero::before{content:'';position:absolute;top:-80px;right:-60px;width:480px;height:480px;
@@ -831,6 +838,10 @@ footer{background:var(--ink);color:rgba(255,255,255,0.7);padding:44px 44px 26px;
     </div>
   </section>
 
+  <section class="announcement-strip" id="announcementStrip" style="display:none" aria-label="平台公告">
+    <div class="announcement-strip-inner" id="announcementStripInner"></div>
+  </section>
+
   <section class="search-section">
     <div class="search-section-inner">
       <div class="search-big">
@@ -1304,6 +1315,7 @@ function renderNavAuth(){
             <div class="_umenu-item" onclick="requireAuth(()=>nav('publish'));closeUserMenu()">📝 发布物品</div>
             <div class="_umenu-item" onclick="requireAuth(()=>nav('messages'));closeUserMenu()">💬 我的消息</div>
             <div class="_umenu-item" onclick="showEditProfile();closeUserMenu()">⚙️ 编辑资料</div>
+            ${STATE.auth.is_admin ? `<div class="_umenu-item" onclick="window.location.href='/admin';closeUserMenu()">🛡️ 管理后台</div>` : ''}
             <div style="height:1px;background:var(--border);margin:4px 0"></div>
             <div class="_umenu-item" style="color:var(--accent)" onclick="doLogout()">🚪 退出登录</div>
           </div>
@@ -1559,11 +1571,30 @@ function nav(page){
 }
 
 // ==================== HOME ====================
+function escapeAnnHtml(s){
+  const d=document.createElement('div');
+  d.textContent=s==null?'':String(s);
+  return d.innerHTML;
+}
+
+async function loadAnnouncements(){
+  const wrap=document.getElementById('announcementStrip');
+  const inner=document.getElementById('announcementStripInner');
+  if(!wrap||!inner) return;
+  try{
+    const items=await apiFetch('/announcements');
+    if(!items||!items.length){ wrap.style.display='none'; return; }
+    wrap.style.display='block';
+    inner.innerHTML=items.map(a=>'<div class="ann-line"><strong>'+escapeAnnHtml(a.title)+'</strong><span>'+escapeAnnHtml(a.content)+'</span></div>').join('');
+  }catch(e){ wrap.style.display='none'; }
+}
+
 async function loadHome(){
   loadStats();
   loadCategories();
   loadHomeProducts();
   loadHomePosts();
+  loadAnnouncements();
 }
 
 async function loadStats(){

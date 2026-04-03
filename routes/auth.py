@@ -25,6 +25,33 @@ def token_required(f):
         return f(current_user_id, *args, **kwargs)
     return decorated
 
+def admin_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = request.headers.get('Authorization', '').replace('Bearer ', '')
+        if not token:
+            return jsonify({'error': '未提供认证token'}), 401
+        try:
+            data = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
+            admin_user_id = data['user_id']
+        except jwt.ExpiredSignatureError:
+            return jsonify({'error': 'token已过期，请重新登录'}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({'error': 'token无效'}), 401
+        db = get_db()
+        try:
+            row = db.execute(
+                'SELECT id,is_admin,is_active FROM users WHERE id=?', (admin_user_id,)
+            ).fetchone()
+            if not row or not row['is_active']:
+                return jsonify({'error': '账号不可用'}), 403
+            if not row['is_admin']:
+                return jsonify({'error': '需要管理员权限'}), 403
+        finally:
+            db.close()
+        return f(admin_user_id, *args, **kwargs)
+    return decorated
+
 def optional_auth(f):
     """Like token_required but allows unauthenticated requests (user_id=None)"""
     @wraps(f)
@@ -130,6 +157,13 @@ def login():
 
         if not user['is_active']:
             return jsonify({'error': '账号已被禁用，请联系客服'}), 403
+
+        db.execute(
+            "UPDATE users SET last_login=datetime('now','localtime') WHERE id=?",
+            (user['id'],)
+        )
+        db.commit()
+        user = db.execute('SELECT * FROM users WHERE id=?', (user['id'],)).fetchone()
 
         token = make_token(user['id'])
         return jsonify({'token': token, 'user': user_to_dict(user)})

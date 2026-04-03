@@ -8,6 +8,7 @@ from routes.products import products_bp
 from routes.messages import messages_bp
 from routes.community import community_bp
 from routes.users import users_bp
+from routes.admin import admin_bp
 
 app = Flask(__name__, static_folder='static')
 app.config['MAX_CONTENT_LENGTH'] = 20 * 1024 * 1024  # 20MB
@@ -39,6 +40,7 @@ app.register_blueprint(products_bp, url_prefix='/api/products')
 app.register_blueprint(messages_bp, url_prefix='/api/messages')
 app.register_blueprint(community_bp, url_prefix='/api/community')
 app.register_blueprint(users_bp, url_prefix='/api/users')
+app.register_blueprint(admin_bp, url_prefix='/api/admin')
 
 # ===== Static file serving =====
 @app.route('/uploads/<path:filename>')
@@ -120,6 +122,21 @@ def platform_stats():
     finally:
         db.close()
 
+@app.route('/api/announcements', methods=['GET'])
+def list_public_announcements():
+    """首页等平台公告（仅展示启用项）。"""
+    from database import get_db
+    db = get_db()
+    try:
+        rows = db.execute(
+            '''SELECT id, title, content, created_at, sort_order
+               FROM announcements WHERE is_active=1
+               ORDER BY sort_order ASC, id DESC'''
+        ).fetchall()
+        return jsonify([dict(r) for r in rows])
+    finally:
+        db.close()
+
 @app.route('/api/categories', methods=['GET'])
 def get_categories():
     from database import get_db
@@ -155,10 +172,17 @@ if __name__ == '__main__':
     print("=" * 50)
     app.run(host='0.0.0.0', port=5000, debug=True)
 
+_static_dir = os.path.join(os.path.dirname(__file__), 'static')
+
+@app.route('/admin')
+@app.route('/admin/')
+def serve_admin():
+    return send_from_directory(_static_dir, 'admin.html')
+
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve_frontend(path):
-    static_dir = os.path.join(os.path.dirname(__file__), 'static')
+    static_dir = _static_dir
     if path and os.path.exists(os.path.join(static_dir, path)):
         return send_from_directory(static_dir, path)
     return send_from_directory(static_dir, 'index.html')

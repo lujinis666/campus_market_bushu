@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Campus Market · 管理后台</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#1a1614;--surface:#252018;--ink:#f7f3ee;--muted:#a89b8c;--accent:#e8472a;
+  --border:rgba(247,243,238,0.1);--green:#3d9a6a;--radius:12px;
+  --font:'Plus Jakarta Sans','Noto Sans SC',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:100vh;line-height:1.5}
+a{color:var(--accent)}
+header{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;border-bottom:1px solid var(--border);background:rgba(0,0,0,0.25)}
+header h1{font-size:18px;font-weight:800}
+header .sub{font-size:12px;color:var(--muted);font-weight:500}
+.layout{display:grid;grid-template-columns:200px 1fr;min-height:calc(100vh - 61px)}
+nav{border-right:1px solid var(--border);padding:16px 0}
+nav button{display:block;width:100%;text-align:left;padding:10px 20px;border:none;background:none;color:var(--muted);font:inherit;font-size:14px;cursor:pointer;border-left:3px solid transparent}
+nav button:hover{color:var(--ink);background:rgba(255,255,255,0.04)}
+nav button.active{color:var(--ink);border-left-color:var(--accent);background:rgba(232,71,42,0.08)}
+main{padding:24px 28px 48px;overflow-x:auto}
+.panel{display:none}
+.panel.active{display:block}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:20px}
+.card h2{font-size:15px;margin-bottom:14px;font-weight:700}
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
+.stat{padding:14px;border-radius:10px;background:rgba(0,0,0,0.2);border:1px solid var(--border)}
+.stat .n{font-size:22px;font-weight:800;color:var(--accent)}
+.stat .l{font-size:12px;color:var(--muted);margin-top:4px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:10px 8px;text-align:left;border-bottom:1px solid var(--border);vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:12px}
+tr:hover td{background:rgba(255,255,255,0.02)}
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:7px 14px;border-radius:8px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;border:none}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{filter:brightness(1.08)}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
+.btn-ghost:hover{color:var(--ink)}
+.btn-danger{background:rgba(232,71,42,0.2);color:#ff8a7a}
+.btn-sm{padding:4px 10px;font-size:12px}
+input,textarea,select{width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:#0d0b0a;color:var(--ink);font:inherit;font-size:14px;margin-top:6px}
+label{display:block;font-size:12px;color:var(--muted);margin-top:12px}
+label:first-child{margin-top:0}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:16px}
+.toolbar input{max-width:220px;margin-top:0}
+.badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600}
+.badge-ok{background:rgba(61,154,106,0.2);color:#7dffc4}
+.badge-off{background:rgba(120,120,120,0.2);color:#ccc}
+.badge-adm{background:rgba(232,71,42,0.25);color:#ffb4a8}
+.login-wrap{max-width:400px;margin:80px auto;padding:32px}
+.login-wrap h2{margin-bottom:8px;font-size:22px}
+.login-wrap p{color:var(--muted);font-size:14px;margin-bottom:24px}
+.toast{position:fixed;bottom:24px;right:24px;padding:12px 18px;background:var(--surface);border:1px solid var(--border);border-radius:10px;font-size:13px;z-index:999;box-shadow:0 8px 32px rgba(0,0,0,0.4)}
+.muted{color:var(--muted);font-size:12px}
+.pre-wrap{white-space:pre-wrap;word-break:break-word;font-size:12px;color:var(--muted);max-height:72px;overflow:auto;display:block}
+.pagination{margin-top:16px;display:flex;gap:8px;align-items:center}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Campus Market 管理后台</h1>
+    <div class="sub">内容审核 · 用户与公告</div>
+  </div>
+  <div id="headerActions"></div>
+</header>
+
+<div id="loginPanel" class="login-wrap" style="display:none">
+  <h2>管理员登录</h2>
+  <p>请使用已授予管理员权限的账号登录。</p>
+  <p id="adminGateNote" class="muted" style="display:none;margin-bottom:16px;padding:12px;border-radius:8px;background:rgba(232,71,42,0.12);border:1px solid var(--border);color:#ffb4a8"></p>
+  <label>用户名或邮箱<input type="text" id="loginId" autocomplete="username"></label>
+  <label>密码<input type="password" id="loginPw" autocomplete="current-password"></label>
+  <div style="margin-top:20px;display:flex;gap:10px">
+    <button class="btn btn-primary" type="button" onclick="doLogin()">登录</button>
+    <a href="/" class="btn btn-ghost" style="text-decoration:none">返回首页</a>
+  </div>
+</div>
+
+<div id="appLayout" class="layout" style="display:none">
+  <nav>
+    <button type="button" class="active" data-tab="dash" onclick="setTab('dash')">概览</button>
+    <button type="button" data-tab="users" onclick="setTab('users')">用户</button>
+    <button type="button" data-tab="posts" onclick="setTab('posts')">社区帖子</button>
+    <button type="button" data-tab="products" onclick="setTab('products')">商品</button>
+    <button type="button" data-tab="ann" onclick="setTab('ann')">公告</button>
+  </nav>
+  <main>
+    <div id="panel-dash" class="panel active">
+      <div class="card"><h2>平台数据</h2><div class="stats" id="dashStats"></div></div>
+    </div>
+    <div id="panel-users" class="panel">
+      <div class="card">
+        <h2>注册用户</h2>
+        <div class="toolbar">
+          <input type="search" id="userQ" placeholder="搜索用户名/邮箱/昵称" onkeydown="if(event.key==='Enter')loadUsers(1)">
+          <button class="btn btn-primary btn-sm" type="button" onclick="loadUsers(1)">搜索</button>
+        </div>
+        <div style="overflow:auto"><table><thead><tr>
+          <th>ID</th><th>用户名</th><th>昵称</th><th>邮箱</th><th>状态</th><th>管理员</th><th>最近登录</th><th>注册时间</th><th>操作</th>
+        </tr></thead><tbody id="userRows"></tbody></table></div>
+        <div class="pagination" id="userPage"></div>
+      </div>
+    </div>
+    <div id="panel-posts" class="panel">
+      <div class="card">
+        <h2>社区帖子</h2>
+        <div class="toolbar">
+          <input type="search" id="postQ" placeholder="搜索标题或正文" onkeydown="if(event.key==='Enter')loadPosts(1)">
+          <button class="btn btn-primary btn-sm" type="button" onclick="loadPosts(1)">搜索</button>
+        </div>
+        <div style="overflow:auto"><table><thead><tr>
+          <th>ID</th><th>标题</th><th>作者</th><th>类型</th><th>时间</th><th>操作</th>
+        </tr></thead><tbody id="postRows"></tbody></table></div>
+        <div class="pagination" id="postPage"></div>
+      </div>
+    </div>
+    <div id="panel-products" class="panel">
+      <div class="card">
+        <h2>商品</h2>
+        <div class="toolbar">
+          <input type="search" id="prodQ" placeholder="搜索标题/描述" onkeydown="if(event.key==='Enter')loadProducts(1)">
+          <select id="prodStatus" style="width:auto;margin-top:0" onchange="loadProducts(1)">
+            <option value="">全部状态</option>
+            <option value="active">在售</option>
+            <option value="deleted">已删除</option>
+            <option value="sold">已售</option>
+          </select>
+          <button class="btn btn-primary btn-sm" type="button" onclick="loadProducts(1)">搜索</button>
+        </div>
+        <div style="overflow:auto"><table><thead><tr>
+          <th>ID</th><th>标题</th><th>卖家</th><th>价格</th><th>状态</th><th>操作</th>
+        </tr></thead><tbody id="prodRows"></tbody></table></div>
+        <div class="pagination" id="prodPage"></div>
+      </div>
+    </div>
+    <div id="panel-ann" class="panel">
+      <div class="card">
+        <h2>新建公告</h2>
+        <label>标题<input type="text" id="annTitle" placeholder="公告标题"></label>
+        <label>正文<textarea id="annBody" rows="3" placeholder="支持多行，将显示在首页公告栏"></textarea></label>
+        <div class="form-row">
+          <label>排序（越小越靠前）<input type="number" id="annSort" value="0"></label>
+          <label>启用 <select id="annActive"><option value="1">是</option><option value="0">否</option></select></label>
+        </div>
+        <button class="btn btn-primary" type="button" style="margin-top:16px" onclick="createAnn()">发布公告</button>
+      </div>
+      <div class="card">
+        <h2>已有公告</h2>
+        <div id="annList"></div>
+      </div>
+    </div>
+  </main>
+</div>
+<div id="toast" class="toast" style="display:none"></div>
+
+<script>
+const API = '/api';
+function getToken(){ return localStorage.getItem('cm_token'); }
+function setToken(t){ if(t) localStorage.setItem('cm_token',t); else localStorage.removeItem('cm_token'); }
+
+async function api(path, opts={}){
+  const headers = {'Content-Type':'application/json'};
+  const token = getToken();
+  if(token) headers['Authorization'] = 'Bearer '+token;
+  const res = await fetch(API+path, {
+    method: opts.method||'GET',
+    headers,
+    body: opts.body!==undefined ? JSON.stringify(opts.body) : undefined
+  });
+  const data = await res.json().catch(()=>({}));
+  if(!res.ok) throw new Error(data.error||'请求失败');
+  return data;
+}
+
+function toast(msg){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.display = 'block';
+  clearTimeout(window._toastT);
+  window._toastT = setTimeout(()=>{ el.style.display='none'; }, 3200);
+}
+
+let state = { user: null, tab: 'dash', userPage: 1, postPage: 1, prodPage: 1 };
+
+async function boot(){
+  const token = getToken();
+  if(!token){ showLogin(); return; }
+  try{
+    const me = await api('/auth/me');
+    if(!me.is_admin){
+      showLogin();
+      const note = document.getElementById('adminGateNote');
+      if(note){
+        note.style.display='block';
+        note.textContent='当前已登录账号不是管理员。可直接在本页使用管理员账号登录（将切换登录用户），或返回前台。';
+      }
+      return;
+    }
+    state.user = me;
+    showApp();
+    renderHeader();
+    loadDash();
+  }catch(e){
+    showLogin();
+  }
+}
+
+function showLogin(){
+  const note = document.getElementById('adminGateNote');
+  if(note){ note.style.display='none'; note.textContent=''; }
+  document.getElementById('loginPanel').style.display = 'block';
+  document.getElementById('appLayout').style.display = 'none';
+  document.getElementById('headerActions').innerHTML = '<a href="/" class="btn btn-ghost" style="text-decoration:none;color:var(--muted)">返回首页</a>';
+}
+function showApp(){
+  document.getElementById('loginPanel').style.display = 'none';
+  document.getElementById('appLayout').style.display = 'grid';
+}
+
+function renderHeader(){
+  document.getElementById('headerActions').innerHTML = `
+    <span class="muted" style="margin-right:12px">${state.user.nickname||state.user.username}</span>
+    <a href="/" class="btn btn-ghost btn-sm" style="text-decoration:none;margin-right:8px">前台首页</a>
+    <button class="btn btn-ghost btn-sm" type="button" onclick="logout()">退出</button>`;
+}
+
+async function doLogin(){
+  const identifier = document.getElementById('loginId').value.trim();
+  const password = document.getElementById('loginPw').value;
+  if(!identifier||!password){ toast('请填写账号和密码'); return; }
+  try{
+    const r = await api('/auth/login',{method:'POST',body:{identifier,password}});
+    if(!r.user || !r.user.is_admin){ toast('该账号不是管理员'); return; }
+    setToken(r.token);
+    state.user = r.user;
+    showApp();
+    renderHeader();
+    setTab('dash');
+    loadDash();
+    toast('登录成功');
+  }catch(e){ toast(e.message||'登录失败'); }
+}
+
+function logout(){
+  setToken(null);
+  state.user = null;
+  showLogin();
+}
+
+function setTab(t){
+  state.tab = t;
+  document.querySelectorAll('nav button').forEach(b=>{
+    b.classList.toggle('active', b.dataset.tab===t);
+  });
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  const map = {dash:'panel-dash',users:'panel-users',posts:'panel-posts',products:'panel-products',ann:'panel-ann'};
+  document.getElementById(map[t]).classList.add('active');
+  if(t==='users') loadUsers(1);
+  if(t==='posts') loadPosts(1);
+  if(t==='products') loadProducts(1);
+  if(t==='ann') loadAnns();
+}
+
+async function loadDash(){
+  try{
+    const s = await api('/admin/stats');
+    document.getElementById('dashStats').innerHTML = `
+      <div class="stat"><div class="n">${s.users}</div><div class="l">注册用户</div></div>
+      <div class="stat"><div class="n">${s.users_active}</div><div class="l">正常账号</div></div>
+      <div class="stat"><div class="n">${s.users_banned}</div><div class="l">已封禁</div></div>
+      <div class="stat"><div class="n">${s.posts}</div><div class="l">社区帖子</div></div>
+      <div class="stat"><div class="n">${s.products_active}</div><div class="l">在售商品</div></div>
+      <div class="stat"><div class="n">${s.announcements}</div><div class="l">公告条数</div></div>`;
+  }catch(e){ toast(e.message); }
+}
+
+async function loadUsers(page){
+  state.userPage = page;
+  const q = document.getElementById('userQ').value.trim();
+  try{
+    const r = await api(`/admin/users?page=${page}&per_page=12&q=${encodeURIComponent(q)}`);
+    const tb = document.getElementById('userRows');
+    tb.innerHTML = r.items.map(u=>`
+      <tr>
+        <td>${u.id}</td>
+        <td>${esc(u.username)}</td>
+        <td>${esc(u.nickname||'')}</td>
+        <td>${esc(u.email||'')}</td>
+        <td>${u.is_active?'<span class="badge badge-ok">正常</span>':'<span class="badge badge-off">封禁</span>'}</td>
+        <td>${u.is_admin?'<span class="badge badge-adm">是</span>':'—'}</td>
+        <td class="muted">${esc(u.last_login||'—')}</td>
+        <td class="muted">${esc(u.created_at||'')}</td>
+        <td>
+          ${!u.is_admin ? (u.is_active
+            ? `<button class="btn btn-danger btn-sm" type="button" onclick="banUser(${u.id})">封禁</button>`
+            : `<button class="btn btn-ghost btn-sm" type="button" onclick="unbanUser(${u.id})">解封</button>`) : '—'}
+        </td>
+      </tr>`).join('') || '<tr><td colspan="9" class="muted">暂无数据</td></tr>';
+    const pages = Math.max(1, Math.ceil(r.total / r.per_page));
+    document.getElementById('userPage').innerHTML = paginate(page, pages, 'loadUsers');
+  }catch(e){ toast(e.message); }
+}
+
+async function banUser(id){
+  if(!confirm('确定封禁该用户？其将无法登录。')) return;
+  try{
+    await api(`/admin/users/${id}`,{method:'PATCH',body:{is_active:false}});
+    toast('已封禁');
+    loadUsers(state.userPage);
+    loadDash();
+  }catch(e){ toast(e.message); }
+}
+async function unbanUser(id){
+  try{
+    await api(`/admin/users/${id}`,{method:'PATCH',body:{is_active:true}});
+    toast('已解封');
+    loadUsers(state.userPage);
+    loadDash();
+  }catch(e){ toast(e.message); }
+}
+
+async function loadPosts(page){
+  state.postPage = page;
+  const q = document.getElementById('postQ').value.trim();
+  try{
+    const r = await api(`/admin/posts?page=${page}&per_page=12&q=${encodeURIComponent(q)}`);
+    const tb = document.getElementById('postRows');
+    tb.innerHTML = r.items.map(p=>`
+      <tr>
+        <td>${p.id}</td>
+        <td><strong>${esc(p.title)}</strong><div class="muted pre-wrap" style="margin-top:4px">${esc((p.content||'').slice(0,120))}${(p.content||'').length>120?'…':''}</div></td>
+        <td>${esc(p.author_nickname||p.author?.nickname||'')}</td>
+        <td>${esc(p.post_type||'')}</td>
+        <td class="muted">${esc(p.created_at||'')}</td>
+        <td><button class="btn btn-danger btn-sm" type="button" onclick="delPost(${p.id})">删除</button></td>
+      </tr>`).join('') || '<tr><td colspan="6" class="muted">暂无数据</td></tr>';
+    const pages = Math.max(1, Math.ceil(r.total / r.per_page));
+    document.getElementById('postPage').innerHTML = paginate(page, pages, 'loadPosts');
+  }catch(e){ toast(e.message); }
+}
+
+async function delPost(id){
+  if(!confirm('确定删除该帖子？不可恢复。')) return;
+  try{
+    await api(`/admin/posts/${id}`,{method:'DELETE'});
+    toast('已删除');
+    loadPosts(state.postPage);
+    loadDash();
+  }catch(e){ toast(e.message); }
+}
+
+async function loadProducts(page){
+  state.prodPage = page;
+  const q = document.getElementById('prodQ').value.trim();
+  const st = document.getElementById('prodStatus').value;
+  const qs = `page=${page}&per_page=12&q=${encodeURIComponent(q)}` + (st?`&status=${encodeURIComponent(st)}`:'');
+  try{
+    const r = await api(`/admin/products?${qs}`);
+    const tb = document.getElementById('prodRows');
+    tb.innerHTML = r.items.map(p=>`
+      <tr>
+        <td>${p.id}</td>
+        <td>${esc(p.title)}</td>
+        <td>${esc(p.seller_username||p.seller?.nickname||'')}</td>
+        <td>¥${p.price}</td>
+        <td>${esc(p.status||'')}</td>
+        <td>${p.status!=='deleted' ? `<button class="btn btn-danger btn-sm" type="button" onclick="delProd(${p.id})">下架删除</button>` : '—'}</td>
+      </tr>`).join('') || '<tr><td colspan="6" class="muted">暂无数据</td></tr>';
+    const pages = Math.max(1, Math.ceil(r.total / r.per_page));
+    document.getElementById('prodPage').innerHTML = paginate(page, pages, 'loadProducts');
+  }catch(e){ toast(e.message); }
+}
+
+async function delProd(id){
+  if(!confirm('确定将该商品标记为已删除并从前台下架？')) return;
+  try{
+    await api(`/admin/products/${id}`,{method:'DELETE'});
+    toast('已处理');
+    loadProducts(state.prodPage);
+    loadDash();
+  }catch(e){ toast(e.message); }
+}
+
+async function loadAnns(){
+  try{
+    const list = await api('/admin/announcements');
+    document.getElementById('annList').innerHTML = list.length ? list.map(a=>`
+      <div class="card" style="margin-bottom:12px;padding:14px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+          <div>
+            <strong>${esc(a.title)}</strong>
+            <span class="badge ${a.is_active?'badge-ok':'badge-off'}" style="margin-left:8px">${a.is_active?'展示中':'已隐藏'}</span>
+            <div class="muted" style="margin-top:8px;white-space:pre-wrap">${esc(a.content)}</div>
+            <div class="muted" style="margin-top:8px">排序 ${a.sort_order} · 更新 ${esc(a.updated_at||a.created_at||'')}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
+            <button class="btn btn-ghost btn-sm" type="button" onclick="toggleAnn(${a.id},${a.is_active?0:1})">${a.is_active?'隐藏':'显示'}</button>
+            <button class="btn btn-danger btn-sm" type="button" onclick="delAnn(${a.id})">删除</button>
+          </div>
+        </div>
+      </div>`).join('') : '<p class="muted">暂无公告</p>';
+  }catch(e){ toast(e.message); }
+}
+
+async function createAnn(){
+  const title = document.getElementById('annTitle').value.trim();
+  const content = document.getElementById('annBody').value.trim();
+  const sort_order = parseInt(document.getElementById('annSort').value,10)||0;
+  const is_active = document.getElementById('annActive').value==='1';
+  if(!title||!content){ toast('请填写标题和正文'); return; }
+  try{
+    await api('/admin/announcements',{method:'POST',body:{title,content,sort_order,is_active}});
+    toast('已发布');
+    document.getElementById('annTitle').value='';
+    document.getElementById('annBody').value='';
+    loadAnns();
+    loadDash();
+  }catch(e){ toast(e.message); }
+}
+
+async function toggleAnn(id, active){
+  try{
+    await api(`/admin/announcements/${id}`,{method:'PUT',body:{is_active:!!active}});
+    toast('已更新');
+    loadAnns();
+  }catch(e){ toast(e.message); }
+}
+
+async function delAnn(id){
+  if(!confirm('删除该公告？')) return;
+  try{
+    await api(`/admin/announcements/${id}`,{method:'DELETE'});
+    toast('已删除');
+    loadAnns();
+    loadDash();
+  }catch(e){ toast(e.message); }
+}
+
+function paginate(cur, max, fn){
+  if(max<=1) return '';
+  let h = '';
+  if(cur>1) h += `<button class="btn btn-ghost btn-sm" type="button" onclick="${fn}(${cur-1})">上一页</button>`;
+  h += `<span class="muted" style="margin:0 8px">第 ${cur} / ${max} 页</span>`;
+  if(cur<max) h += `<button class="btn btn-ghost btn-sm" type="button" onclick="${fn}(${cur+1})">下一页</button>`;
+  return h;
+}
+
+function esc(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+boot();
+</script>
+</body>
+</html>
