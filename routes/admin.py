@@ -297,3 +297,62 @@ def admin_delete_announcement(_admin_id, aid):
         return jsonify({'message': '已删除'})
     finally:
         db.close()
+
+
+@admin_bp.route('/reports', methods=['GET'])
+@admin_required
+def admin_list_reports(_admin_id):
+    page = max(1, int(request.args.get('page', 1)))
+    per_page = min(50, max(1, int(request.args.get('per_page', 15))))
+    report_type = request.args.get('type', '').strip()
+    status = request.args.get('status', '').strip()
+    offset = (page - 1) * per_page
+    db = get_db()
+    try:
+        where = ['1=1']
+        params = []
+        if report_type:
+            where.append('r.report_type=?')
+            params.append(report_type)
+        if status:
+            where.append('r.status=?')
+            params.append(status)
+        w = ' AND '.join(where)
+        total = db.execute(f'SELECT COUNT(*) as c FROM reports r WHERE {w}', params).fetchone()['c']
+        rows = db.execute(
+            f'''SELECT r.*,
+                     u.username as reporter_username, u.nickname as reporter_nickname,
+                     p.title as product_title, po.title as post_title
+                FROM reports r
+                JOIN users u ON r.reporter_id=u.id
+                LEFT JOIN products p ON r.report_type='product' AND r.target_id=p.id
+                LEFT JOIN posts po ON r.report_type='post' AND r.target_id=po.id
+                WHERE {w} ORDER BY r.id DESC LIMIT ? OFFSET ?''',
+            params + [per_page, offset]
+        ).fetchall()
+        items = [dict(r) for r in rows]
+        return jsonify({'items': items, 'total': total, 'page': page, 'per_page': per_page})
+    finally:
+        db.close()
+
+
+@admin_bp.route('/reports/<int:rid>', methods=['PUT'])
+@admin_required
+def admin_update_report(_admin_id, rid):
+    data = request.get_json() or {}
+    status = data.get('status', '').strip()
+    if not status or status not in ['pending', 'resolved', 'rejected']:
+        return jsonify({'error': '状态必须是 pending、resolved 或 rejected'}), 400
+    db = get_db()
+    try:
+        row = db.execute('SELECT id FROM reports WHERE id=?', (rid,)).fetchone()
+        if not row:
+            return jsonify({'error': '举报不存在'}), 404
+        db.execute(
+            "UPDATE reports SET status=? WHERE id=?",
+            (status, rid)
+        )
+        db.commit()
+        return jsonify({'message': '已更新'})
+    finally:
+        db.close()

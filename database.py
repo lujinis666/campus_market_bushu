@@ -233,6 +233,18 @@ def init_db():
         FOREIGN KEY(blocked_id) REFERENCES users(id)
     )''')
 
+    # Reports/Complaints (用户举报)
+    c.execute('''CREATE TABLE IF NOT EXISTS reports (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        reporter_id INTEGER NOT NULL,
+        report_type TEXT NOT NULL,
+        target_id INTEGER NOT NULL,
+        reason TEXT NOT NULL,
+        status TEXT DEFAULT 'pending',
+        created_at TEXT DEFAULT (datetime('now','localtime')),
+        FOREIGN KEY(reporter_id) REFERENCES users(id)
+    )''')
+
     # Site announcements (admin-managed)
     c.execute('''CREATE TABLE IF NOT EXISTS announcements (
         id INTEGER PRIMARY KEY AUTOINCREMENT,

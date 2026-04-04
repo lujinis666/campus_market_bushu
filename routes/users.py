@@ -195,6 +195,40 @@ def unblock_user(current_user_id, uid):
     finally:
         db.close()
 
+# ── 提交举报 ──
+@users_bp.route('/reports', methods=['POST'])
+@token_required
+def submit_report(current_user_id):
+    data = request.get_json() or {}
+    report_type = data.get('report_type', '').strip()   # product / post / user
+    target_id   = data.get('target_id')
+    reason      = data.get('reason', '').strip()
+
+    if not report_type or target_id is None or not reason:
+        return jsonify({'error': '缺少必要参数'}), 400
+    if report_type not in ('product', 'post', 'user'):
+        return jsonify({'error': '举报类型无效'}), 400
+
+    db = get_db()
+    try:
+        # 防止重复举报同一目标（target_id=0 为平台级反馈，不限制）
+        if target_id != 0:
+            existing = db.execute(
+                'SELECT id FROM reports WHERE reporter_id=? AND report_type=? AND target_id=?',
+                (current_user_id, report_type, target_id)
+            ).fetchone()
+            if existing:
+                return jsonify({'error': '你已举报过该内容，我们正在处理中'}), 409
+
+        db.execute(
+            'INSERT INTO reports (reporter_id, report_type, target_id, reason) VALUES (?,?,?,?)',
+            (current_user_id, report_type, target_id, reason)
+        )
+        db.commit()
+        return jsonify({'message': '举报已提交，我们将在24小时内处理'}), 201
+    finally:
+        db.close()
+
 # Notifications
 @users_bp.route('/notifications', methods=['GET'])
 @token_required

@@ -91,6 +91,7 @@ label:first-child{margin-top:0}
     <button type="button" data-tab="users" onclick="setTab('users')">用户</button>
     <button type="button" data-tab="posts" onclick="setTab('posts')">社区帖子</button>
     <button type="button" data-tab="products" onclick="setTab('products')">商品</button>
+    <button type="button" data-tab="reports" onclick="setTab('reports')">收到举报</button>
     <button type="button" data-tab="ann" onclick="setTab('ann')">公告</button>
   </nav>
   <main>
@@ -142,6 +143,32 @@ label:first-child{margin-top:0}
         <div class="pagination" id="prodPage"></div>
       </div>
     </div>
+    <div id="panel-reports" class="panel">
+      <div class="card">
+        <h2>收到举报</h2>
+        <div class="toolbar">
+          <select id="reportType" style="width:auto;margin-top:0" onchange="loadReports(1)">
+            <option value="">全部类型</option>
+            <option value="product">商品举报</option>
+            <option value="post">帖子举报</option>
+            <option value="user">用户举报</option>
+            <option value="comment">评论举报</option>
+          </select>
+          <select id="reportStatus" style="width:auto;margin-top:0" onchange="loadReports(1)">
+            <option value="pending">待处理</option>
+            <option value="resolved">已处理</option>
+            <option value="rejected">已拒绝</option>
+            <option value="">全部状态</option>
+          </select>
+          <button class="btn btn-primary btn-sm" type="button" onclick="loadReports(1)">刷新</button>
+        </div>
+        <div style="overflow:auto"><table><thead><tr>
+          <th>ID</th><th>举报类型</th><th>举报内容</th><th>举报人</th><th>被举报对象</th><th>举报原因</th><th>状态</th><th>创建时间</th><th>操作</th>
+        </tr></thead><tbody id="reportRows"></tbody></table></div>
+        <div class="pagination" id="reportPage"></div>
+      </div>
+    </div>
+
     <div id="panel-ann" class="panel">
       <div class="card">
         <h2>新建公告</h2>
@@ -189,7 +216,7 @@ function toast(msg){
   window._toastT = setTimeout(()=>{ el.style.display='none'; }, 3200);
 }
 
-let state = { user: null, tab: 'dash', userPage: 1, postPage: 1, prodPage: 1 };
+let state = { user: null, tab: 'dash', userPage: 1, postPage: 1, prodPage: 1, reportPage: 1 };
 
 async function boot(){
   const token = getToken();
@@ -262,11 +289,12 @@ function setTab(t){
     b.classList.toggle('active', b.dataset.tab===t);
   });
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  const map = {dash:'panel-dash',users:'panel-users',posts:'panel-posts',products:'panel-products',ann:'panel-ann'};
+  const map = {dash:'panel-dash',users:'panel-users',posts:'panel-posts',products:'panel-products',reports:'panel-reports',ann:'panel-ann'};
   document.getElementById(map[t]).classList.add('active');
   if(t==='users') loadUsers(1);
   if(t==='posts') loadPosts(1);
   if(t==='products') loadProducts(1);
+  if(t==='reports') loadReports(1);
   if(t==='ann') loadAnns();
 }
 
@@ -386,6 +414,61 @@ async function delProd(id){
     await api(`/admin/products/${id}`,{method:'DELETE'});
     toast('已处理');
     loadProducts(state.prodPage);
+    loadDash();
+  }catch(e){ toast(e.message); }
+}
+
+async function loadReports(page){
+  state.reportPage = page;
+  const type = document.getElementById('reportType').value;
+  const status = document.getElementById('reportStatus').value;
+  const qs = `page=${page}&per_page=12` + (type?`&type=${encodeURIComponent(type)}`:'') + (status?`&status=${encodeURIComponent(status)}`:'');
+  try{
+    const r = await api(`/admin/reports?${qs}`);
+    const tb = document.getElementById('reportRows');
+    tb.innerHTML = r.items.map(rep=>{
+      let typeLabel = {product:'商品',post:'帖子',user:'用户',comment:'评论'}[rep.report_type] || rep.report_type;
+      let statusBadge = rep.status === 'resolved' ? 'badge-ok' : (rep.status === 'rejected' ? 'badge-off' : 'badge');
+      let statusText = rep.status === 'resolved' ? '已处理' : (rep.status === 'rejected' ? '已拒绝' : '待处理');
+      return `
+        <tr>
+          <td>${rep.id}</td>
+          <td>${typeLabel}</td>
+          <td><div class="pre-wrap">${esc(rep.reason || '—')}</div></td>
+          <td>${esc(rep.reporter_username || rep.reporter?.nickname || '')}</td>
+          <td>${esc(rep.target_id ? (rep.report_type+' ID:'+rep.target_id) : '—')}</td>
+          <td>${esc(rep.report_type === 'product' ? (rep.product?.title || '—') : (rep.report_type === 'post' ? (rep.post?.title || '—') : '—'))}</td>
+          <td><span class="badge ${statusBadge}">${statusText}</span></td>
+          <td class="muted">${esc(rep.created_at || '')}</td>
+          <td>
+            ${rep.status === 'pending' ? `
+              <button class="btn btn-primary btn-sm" type="button" onclick="resolveReport(${rep.id})">处理</button>
+              <button class="btn btn-ghost btn-sm" type="button" onclick="rejectReport(${rep.id})">拒绝</button>
+            ` : '—'}
+          </td>
+        </tr>`;
+    }).join('') || '<tr><td colspan="9" class="muted">暂无举报</td></tr>';
+    const pages = Math.max(1, Math.ceil(r.total / r.per_page));
+    document.getElementById('reportPage').innerHTML = paginate(page, pages, 'loadReports');
+  }catch(e){ toast(e.message); }
+}
+
+async function resolveReport(id){
+  if(!confirm('标记为已处理？')) return;
+  try{
+    await api(`/admin/reports/${id}`,{method:'PUT',body:{status:'resolved'}});
+    toast('已标记为处理');
+    loadReports(state.reportPage);
+    loadDash();
+  }catch(e){ toast(e.message); }
+}
+
+async function rejectReport(id){
+  if(!confirm('拒绝该举报？')) return;
+  try{
+    await api(`/admin/reports/${id}`,{method:'PUT',body:{status:'rejected'}});
+    toast('已拒绝');
+    loadReports(state.reportPage);
     loadDash();
   }catch(e){ toast(e.message); }
 }
